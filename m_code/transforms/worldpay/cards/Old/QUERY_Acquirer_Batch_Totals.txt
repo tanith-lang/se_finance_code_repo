@@ -1,0 +1,7 @@
+let
+    Source = Excel.CurrentWorkbook(){[Name="tblAcquirerBatchDetail"]}[Content],
+    #"Group by [Batch ID]" = Table.Group(Source, {"Merchant ID", "Batch Id", "Trading Date"}, {{"Date Total", each List.Sum([Amount]), type number}}),
+    #"Set Column Data Types" = Table.TransformColumnTypes(#"Group by [Batch ID]",{{"Merchant ID", type text}, {"Batch Id", Int64.Type}, {"Trading Date", type date}}),
+    #"Group by [Trading Date]" = Table.Group(#"Set Column Data Types", {"Merchant ID", "Trading Date"}, {{"Date Total", each List.Sum([Date Total]), type number}})
+in
+    #"Group by [Trading Date]"

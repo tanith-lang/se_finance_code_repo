@@ -1,0 +1,8 @@
+TOTAL F_VCHRS [payment_amount]:=SUM( f_vouchers[payment_amount] )
+TOTAL_VOUCHERS:=CALCULATE( [TOTAL F_VCHRS [payment_amount]]] )
+TOTAL_GIFT_VOUCHERS:=CALCULATE( [TOTAL F_VCHRS [payment_amount]]], 
+				f_vouchers[voucher_type] = "GIFT" )
+TOTAL_PROMO_VOUCHERS:=CALCULATE( -[TOTAL F_VCHRS [payment_amount]]], 
+				f_vouchers[voucher_type] = "PROMOTIONAL" )
+TOTAL_REDEEMED_VOUCHERS:=CALCULATE( [TOTAL F_VCHRS [payment_amount]]], 
+		f_vouchers[redemption_date] <> BLANK() )

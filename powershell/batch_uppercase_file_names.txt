@@ -1,0 +1,3 @@
+// Batch uppercase all file names in a folder
+
+Get-ChildItem -Path your_path -Recurse | Rename-item -NewName {$_.name.ToUpper()}

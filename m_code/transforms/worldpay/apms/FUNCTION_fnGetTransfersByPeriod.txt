@@ -1,0 +1,46 @@
+// APM - fnGetTransfersByPeriod
+
+(filePath as text, fileName as text) =>
+
+let
+    Source = Csv.Document(File.Contents(filePath&fileName),[Delimiter=",", Columns=15, Encoding=1252, QuoteStyle=QuoteStyle.None]),
+    #"Removed Blank Rows" = Table.SelectRows(Source, each not List.IsEmpty(List.RemoveMatchingItems(Record.FieldValues(_), {"", null}))),
+    #"Promoted Headers" = Table.PromoteHeaders(#"Removed Blank Rows", [PromoteAllScalars=true]),
+    #"Filter [Payment Currency]" = Table.SelectRows(#"Promoted Headers", each ([Settlement Currency] = "DKK")),
+    #"Replaced Value" = Table.ReplaceValue(#"Filter [Payment Currency]","PAYMENT_TO_","Z_PAYMENT_TO_",Replacer.ReplaceText,{"Event Type"}),
+    #"Duplicate [Journal Description]" = Table.DuplicateColumn(#"Replaced Value", "Journal Description", "Journal Description - Copy"),
+    #"Split Column by Delimiter" = Table.SplitColumn(#"Duplicate [Journal Description]", "Journal Description - Copy", Splitter.SplitTextByDelimiter(" ", QuoteStyle.Csv), {"Journal Description - Copy.1", "Journal Description - Copy.2", "Journal Description - Copy.3", "Journal Description - Copy.4", "Journal Description - Copy.5"}),
+    #"Removed Columns1" = Table.RemoveColumns(#"Split Column by Delimiter",{"Journal Description - Copy.1", "Journal Description - Copy.3", "Journal Description - Copy.4", "Journal Description - Copy.5"}),
+    #"Replaced Value1" = Table.ReplaceValue(#"Removed Columns1",".","",Replacer.ReplaceText,{"Journal Description - Copy.2"}),
+    #"Replaced Value2" = Table.ReplaceValue(#"Replaced Value1","fee","",Replacer.ReplaceText,{"Journal Description - Copy.2"}),
+    #"Replaced Value5" = Table.ReplaceValue(#"Replaced Value2","door","",Replacer.ReplaceText,{"Journal Description - Copy.2"}),
+    #"Replaced Value6" = Table.ReplaceValue(#"Replaced Value5","of","",Replacer.ReplaceText,{"Journal Description - Copy.2"}),
+    #"Replace ""Jan""" = Table.ReplaceValue(#"Replaced Value6","Jan","",Replacer.ReplaceValue,{"Journal Description - Copy.2"}),
+    #"Replace ""Feb""" = Table.ReplaceValue(#"Replace ""Jan""","Feb","",Replacer.ReplaceText,{"Journal Description - Copy.2"}),
+    #"Replace ""Mar""" = Table.ReplaceValue(#"Replace ""Feb""","Mar","",Replacer.ReplaceText,{"Journal Description - Copy.2"}),
+    #"Replace ""Apr""" = Table.ReplaceValue(#"Replace ""Mar""","Apr","",Replacer.ReplaceText,{"Journal Description - Copy.2"}),
+    #"Replace ""May""" = Table.ReplaceValue(#"Replace ""Apr""","May","",Replacer.ReplaceText,{"Journal Description - Copy.2"}),
+    #"Replace ""Jun""" = Table.ReplaceValue(#"Replace ""May""","Jun","",Replacer.ReplaceText,{"Journal Description - Copy.2"}),
+    #"Replaced ""Jul""" = Table.ReplaceValue(#"Replace ""Jun""","Jul","",Replacer.ReplaceText,{"Journal Description - Copy.2"}),
+    #"Replace ""Aug""" = Table.ReplaceValue(#"Replaced ""Jul""","Aug","",Replacer.ReplaceText,{"Journal Description - Copy.2"}),
+    #"Replace ""Sep""" = Table.ReplaceValue(#"Replace ""Aug""","Sep","",Replacer.ReplaceText,{"Journal Description - Copy.2"}),
+    #"Replace ""Oct""" = Table.ReplaceValue(#"Replace ""Sep""","Oct","",Replacer.ReplaceText,{"Journal Description - Copy.2"}),
+    #"Replace ""Nov""" = Table.ReplaceValue(#"Replace ""Oct""","Nov","",Replacer.ReplaceText,{"Journal Description - Copy.2"}),
+    #"Replace ""Dec""" = Table.ReplaceValue(#"Replace ""Nov""","Dec","",Replacer.ReplaceText,{"Journal Description - Copy.2"}),
+    #"Rename [Transfer Date]" = Table.RenameColumns(#"Replace ""Dec""",{{"Journal Description - Copy.2", "Transfer Date"}}),
+    #"Replaced Value3" = Table.ReplaceValue(#"Rename [Transfer Date]",". .","",Replacer.ReplaceText,{"Journal Description"}),
+    #"Renamed Columns1" = Table.RenameColumns(#"Replaced Value3",{{"Date", "Trading Date"}}),
+    #"Merge [Merchant Account Mapping] Table" = Table.NestedJoin(#"Renamed Columns1",{"Merchant"},#"Merchant Account Mapping (Import)",{"merchant"},"NewColumn",JoinKind.LeftOuter),
+    #"Extract [Merchant ID]" = Table.ExpandTableColumn(#"Merge [Merchant Account Mapping] Table", "NewColumn", {"com_id"}, {"Merchant ID"}),
+    #"Reordered Columns" = Table.ReorderColumns(#"Extract [Merchant ID]",{"Merchant", "Merchant ID", "Batch ID", "Service Level", "Event Type", "Trading Date", "Order Code", "Reference", "Payment Method", "Payment Currency", "Payment Amount", "Settlement Currency", "Commission Amount", "Guarantee Amount", "Net Amount", "Journal Description", "Transfer Date"}),
+    #"Merge [APM Authorised (Group)]" = Table.NestedJoin(#"Reordered Columns",{"Merchant", "Order Code"},#"APM Authorised (Reference)",{"Merchant Code", "OrderCode"},"APM Authorised/Refunded (Group)",JoinKind.LeftOuter),
+    #"Expanded APM Authorised/Refunded (Group)" = Table.ExpandTableColumn(#"Merge [APM Authorised (Group)]", "APM Authorised/Refunded (Group)", {"Authorised Date"}, {"Authorised Date"}),
+    #"Reordered Columns1" = Table.ReorderColumns(#"Expanded APM Authorised/Refunded (Group)",{"Merchant", "Merchant ID", "Batch ID", "Service Level", "Event Type", "Authorised Date", "Trading Date", "Order Code", "Reference", "Payment Method", "Payment Currency", "Payment Amount", "Settlement Currency", "Commission Amount", "Guarantee Amount", "Net Amount", "Journal Description", "Transfer Date"}),
+    #"Set Column Data Types" = Table.TransformColumnTypes(#"Reordered Columns1",{{"Merchant", type text}, {"Merchant ID", type text}, {"Batch ID", Int64.Type}, {"Service Level", type text}, {"Trading Date", type date}, {"Order Code", type text}, {"Reference", type text}, {"Payment Method", type text}, {"Payment Currency", type text}, {"Settlement Currency", type text}, {"Payment Amount", Currency.Type}, {"Commission Amount", Currency.Type}, {"Guarantee Amount", Currency.Type}, {"Net Amount", Currency.Type}, {"Transfer Date", type date}}),
+    #"Sorted Rows" = Table.Sort(#"Set Column Data Types",{{"Merchant ID", Order.Ascending}, {"Merchant", Order.Ascending}, {"Batch ID", Order.Ascending}, {"Event Type", Order.Ascending}}),
+    #"Filled Up" = Table.FillUp(#"Sorted Rows",{"Transfer Date"}),
+    #"Replaced Value4" = Table.ReplaceValue(#"Filled Up","Z_","",Replacer.ReplaceText,{"Event Type"}),
+    #"Replaced Value7" = Table.ReplaceValue(#"Replaced Value4",".  .","",Replacer.ReplaceText,{"Journal Description"}),
+    #"Rename [Merchant]" = Table.RenameColumns(#"Replaced Value7",{{"Merchant", "Merchant Code"}})
+in
+    #"Rename [Merchant]"

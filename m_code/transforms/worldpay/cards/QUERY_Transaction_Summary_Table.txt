@@ -1,0 +1,17 @@
+let
+    prmFolderPath = Excel.CurrentWorkbook(){[Name="prmFolderPath"]}[Content]{0}[Column1],
+    prmCurrency = Excel.CurrentWorkbook(){[Name="prmCurrency"]}[Content]{0}[Column1],
+
+    Source = Folder.Files(prmFolderPath),
+    #"Filter [Folder Path]" = Table.SelectRows(Source, each Text.Contains([Folder Path], "Transaction Summary")),
+    #"Filter [Extension]" = Table.SelectRows(#"Filter [Folder Path]", each [Extension] = ".csv"),
+    #"Filter [Name]" = Table.SelectRows(#"Filter [Extension]", each Text.Contains([Name], "Transaction Summary")),
+    #"Removed Other Columns" = Table.SelectColumns(#"Filter [Name]",{"Name", "Folder Path"}),
+    #"Add <fnGetTransactionSummary>" = Table.AddColumn(#"Removed Other Columns", "fnGetTransactionSummary", each fnGetTransactionSummary([Folder Path], [Name])),
+    #"Invoke <fnGetTransactionSummary>" = Table.ExpandTableColumn(#"Add <fnGetTransactionSummary>", "fnGetTransactionSummary", {"Merchant Code", "OrderCode", "Date", "PaymentMethod", "Status", "CurrencyCode", "Amount", "Commission", "Batch ID", "Refusal Reason"}, {"Merchant Code", "OrderCode", "Date", "PaymentMethod", "Status", "CurrencyCode", "Amount", "Commission", "Batch ID", "Refusal Reason"}),
+    #"Remove Source Columns" = Table.RemoveColumns(#"Invoke <fnGetTransactionSummary>",{"Name", "Folder Path"}),
+    #"Set Column Data Types" = Table.TransformColumnTypes(#"Remove Source Columns",{{"Merchant Code", type text}, {"OrderCode", type text}, {"Date", type datetime}, {"PaymentMethod", type text}, {"Status", type text}, {"CurrencyCode", type text}, {"Amount", Currency.Type}, {"Commission", Currency.Type}, {"Batch ID", Int64.Type}, {"Refusal Reason", type text}}),
+    #"Filter [PaymentMethod]" = Table.SelectRows(#"Set Column Data Types", each [PaymentMethod] <> "CARTEBLEUE-SSL" and [PaymentMethod] <> "CB-SSL" and [PaymentMethod] <> "DINERS-SSL" and [PaymentMethod] <> "IDEAL-SSL" and [PaymentMethod] <> "PAYPAL-EXPRESS" and [PaymentMethod] <> "PAYU-SSL" and [PaymentMethod] <> "SOFORT-SSL"),
+    #"Filter [Currency]" = Table.SelectRows(#"Filter [PaymentMethod]", each ([CurrencyCode] = prmCurrency))
+in
+    #"Filter [Currency]"

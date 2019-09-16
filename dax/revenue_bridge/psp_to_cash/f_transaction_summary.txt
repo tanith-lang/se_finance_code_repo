@@ -1,0 +1,101 @@
+// Core Measures
+Total Amount:=sum( f_transaction_summary[amount] )
+
+Total Authorised Phase:=calculate( [Total Amount], filter( d_phases, d_phases[phase] = "Authorisation" ) )
+Total Settlement Phase:=calculate( [Total Amount], filter( d_phases, d_phases[phase] = "Settlement" ) )
+Total Refunded:=calculate( [Total Amount], filter( d_phases, d_phases[phase] = "Refund" ) )
+Total Chargebacks:=calculate( [Total Amount], filter( d_phases, d_phases[phase] = "Chargeback" ) )
+Total Sundries:=calculate( [Total Amount], filter( d_phases, d_phases[phase] = "Sundries" ) )
+Total Cash Impact:=calculate( [Total Amount], filter( d_statuses, d_statuses[status] = "CASH_IMPACT") )
+Total Refund Impact:=calculate( [Total Amount], filter( d_statuses, d_statuses[status] = "REFUND_IMPACT") )
+Total Commission:=calculate( [Total Amount], filter(d_statuses, d_statuses[status] = "COMMISSION" ) )
+Total Interchange:=calculate( [Total Amount], filter( d_statuses, d_statuses[status] = "INTERCHANGE" || d_statuses[status] = "INTERCHANGE_REVERSAL" ) )
+Total Charges:=calculate( [Total Amount], filter( d_statuses, d_statuses[status] = "INTERCHANGE" || d_statuses[status] = "INTERCHANGE_REVERSAL" || d_statuses[status] = "COMMISSION" ) )
+
+Total Net Amount:=[Total Amount] + [Total Commission]
+
+
+// PSP Debtor Measures
+Cash in Transit:=-calculate( [Total Authorised Phase] + [Total Commission], filter( f_transaction_summary, f_transaction_summary[cash_in_transit] = "C/F" ) )
+Cumulative Cash in Transit:=CALCULATE (
+	SUMX (
+    		FILTER (
+        			ALL ( dCalendar ),
+       			 dCalendar[month_id] <= MAX ( dCalendar[month_id] )
+    		),
+   		[Cash in Transit]
+	)
+)
+Cash Brought Forward:=calculate( [Total Cash Impact], filter( f_transaction_summary, f_transaction_summary[cash_brought_forward] = "B/F" ) )
+Cumulative Cash Brought Forward:=CALCULATE (
+	SUMX (
+    		FILTER (
+        			ALL ( dCalendar ),
+        			dCalendar[month_id] <= MAX ( dCalendar[month_id] ) 
+    		),
+   		[Cash Brought Forward]
+	)
+)
+
+// GBP Currency Conversion
+Total Amount (GBP):=sum( f_transaction_summary[amount_gbp] )
+Total Authorised Phase (GBP):=calculate( [Total Amount (GBP)], filter( d_phases, d_phases[phase] = "Authorisation" ) )
+
+Total Settlement Phase (GBP):=calculate( [Total Amount (GBP)], filter( d_phases, d_phases[phase] = "Settlement" ) )
+Total Refunded (GBP):=calculate( [Total Amount (GBP)], filter( d_phases, d_phases[phase] = "Refund" ) )
+Total Chargebacks (GBP):=calculate( [Total Amount (GBP)], filter( d_phases, d_phases[phase] = "Chargeback" ) )
+Total Sundries (GBP):=calculate( [Total Amount (GBP)], filter( d_phases, d_phases[phase] = "Sundries" ) )
+Total Cash Impact (GBP:=calculate( [Total Amount (GBP)], filter( d_statuses, d_statuses[status] = "CASH_IMPACT") )
+Total Refund Impact (GBP):=calculate( [Total Amount (GBP)], filter( d_statuses, d_statuses[status] = "REFUND_IMPACT") )
+Total Commission (GBP):=calculate( [Total Amount (GBP)], filter(d_statuses, d_statuses[status] = "COMMISSION" ) )
+Total Interchange (GBP):=calculate( [Total Amount (GBP)], filter( d_statuses, d_statuses[status] = "INTERCHANGE" || d_statuses[status] = "INTERCHANGE_REVERSAL" ) )
+
+Total Net Amount (GBP):=[Total Amount] + [Total Commission]
+Cumulative Amount (GBP):=calculate( [Total Amount (GBP)], filter( 'dCalendar', 'dCalendar'[date] <= max( 'dCalendar'[date] ) ) )
+
+Cash in Transit (GBP):=-calculate( [Total Authorised Phase (GBP)] + [Total Commission (GBP)], filter( f_transaction_summary, f_transaction_summary[cash_in_transit] = "C/F" ) )
+Cumulative Cash in Transit (GBP):=CALCULATE (
+	SUMX (
+    		FILTER (
+        			ALL ( dCalendar ),
+        			dCalendar[month_id] <= MAX ( dCalendar[month_id] )
+    		),
+   	[Cash in Transit (GBP)]
+	)
+)
+Cash Brought Forward (GBP):=calculate( [Total Cash Impact (GBP], filter( f_transaction_summary, f_transaction_summary[cash_brought_forward] = "B/F" ) )
+Cumulative Cash Brought Forward (GBP):=CALCULATE (
+	SUMX (
+    		FILTER (
+        			ALL ( dCalendar ),
+        			dCalendar[month_id] <= MAX ( dCalendar[month_id] ) 
+    		),
+   		[Cash Brought Forward (GBP)]
+	)
+)
+
+
+
+// Additional Fields
+[authorised_date]
+= calculate( min( f_transaction_summary[date] ), 
+	filter( f_transaction_summary, f_transaction_summary[order_code] = earlier( f_transaction_summary[order_code] )),
+	filter(d_phases, d_phases[phase] = "Authorisation" ) )
+
+[settled_date]
+= calculate( min( f_transaction_summary[date] ),
+	filter( f_transaction_summary, f_transaction_summary[order_code] = earlier( f_transaction_summary[order_code] ) ), 
+	filter(d_statuses, d_statuses[status] = "CASH_IMPACT" ) )
+
+[month_no]
+= month( f_transaction_summary[date] )
+
+[year_no]
+= year( f_transaction_summary[date] )
+
+[cash_in_transit]
+= if( f_transaction_summary[settled_date] > endofmonth( f_transaction_summary[date] ), "C/F",blank() )
+
+[cash_brought_forward]
+= if( f_transaction_summary[authorised_date] < startofmonth( f_transaction_summary[date] ), "B/F", blank() )
+

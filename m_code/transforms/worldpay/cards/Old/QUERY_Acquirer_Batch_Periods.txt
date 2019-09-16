@@ -1,0 +1,17 @@
+let
+    Source = Folder.Files("C:\Users\financetemp\Dropbox\Revenue bridge\Revenue Bridge 2017\Raw Data\Acquirer Batch Periods"),
+    #"Removed Columns" = Table.RemoveColumns(Source,{"Date accessed", "Date modified", "Date created", "Attributes", "Folder Path"}),
+    #"[Filter File Extension]" = Table.SelectRows(#"Removed Columns", each [Extension] = ".csv"),
+    #"[Filter File name]" = Table.SelectRows(#"[Filter File Extension]", each Text.Contains([Name], "Acquirer Batch Period")),
+    #"Invoke Custom Function1" = Table.AddColumn(#"[Filter File name]", "Transform File from Acquirer Batch Periods", each #"Transform File from Acquirer Batch Periods"([Content])),
+    #"Removed Other Columns1" = Table.SelectColumns(#"Invoke Custom Function1", {"Transform File from Acquirer Batch Periods"}),
+    #"Expanded Table Column1" = Table.ExpandTableColumn(#"Removed Other Columns1", "Transform File from Acquirer Batch Periods", Table.ColumnNames(#"Transform File from Acquirer Batch Periods"(#"Sample File (6)"))),
+    #"[Set Column Data Types]" = Table.TransformColumnTypes(#"Expanded Table Column1",{{"Merchant", type text}, {"Batch Id", Int64.Type}, {"Period Begin Date", type datetime}, {"Period End Date", type datetime}, {"#Transactions", Int64.Type}, {"Currency", type text}, {"Amount", type number}}),
+    #"[Filter Currency]" = Table.SelectRows(#"[Set Column Data Types]", each ([Currency] = "SEK")),
+    #"[Merge Merchant ID Table]" = Table.NestedJoin(#"[Filter Currency]",{"Merchant"},#"Merchant ID (Table)",{"Merchant Code"},"NewColumn",JoinKind.LeftOuter),
+    #"Expand [Merchant ID]" = Table.ExpandTableColumn(#"[Merge Merchant ID Table]", "NewColumn", {"Company ID going forward"}, {"Company ID going forward"}),
+    #"Rename [Merchant ID]" = Table.RenameColumns(#"Expand [Merchant ID]",{{"Company ID going forward", "Merchant ID"}, {"Merchant", "Merchant Code"}}),
+    #"Reordered Columns" = Table.ReorderColumns(#"Rename [Merchant ID]",{"Merchant Code", "Merchant ID", "Batch Id", "Period Begin Date", "Period End Date", "#Transactions", "Currency", "Amount"}),
+    #"Sorted Rows" = Table.Sort(#"Reordered Columns",{{"Merchant Code", Order.Ascending}, {"Batch Id", Order.Ascending}})
+in
+    #"Sorted Rows"

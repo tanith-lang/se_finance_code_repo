@@ -1,0 +1,25 @@
+// Booking Measures
+
+TOTAL F_BKNG [booking_fee]:=SUM(f_transactions[booking_fee])
+TOTAL F_BKNG [atol_fee]:=SUM(f_transactions[atol_fee])
+TOTAL F_BKNG [surcharge]:=SUM(f_transactions[payment_surcharge])
+TOTAL F_BKNG [credits]:=-SUM(f_transactions[credit_amount])
+TOTAL F_BKNG [payment_amount]:=SUM(f_transactions[booking_total])
+TOTAL F_BKNG [hold_booked]:=-SUM(f_transactions[hold_amount])
+TOTAL F_BKNG [booking_total]:=SUM(f_transactions[booking_total])
+TOTAL F_BKNG [hold_sales]:=CALCULATE( SUM(f_transactions[booking_total]), f_transactions[booking_type] = "HOLD" )
+TOTAL_F_BKNG[Reversed_Bookings]:=CALCULATE( SUM(f_transactions[booking_total]), f_transactions[booking_type] = "REV_BKG" )
+TOTAL_F_BKNG[MOTO]:=CALCULATE( SUM(f_transactions[booking_total]), f_transactions[booking_type] = "MOTO" )
+TTV_REVENUE:=CALCULATE( 
+	[TOTAL F_BKNG [booking_total]]] - [TOTAL_F_BKNG[Reversed_Bookings]]],
+	f_transactions[booking_type] <> "HOLD" )
+
+
+// Calculated Columns
+
+hold_amount = RELATED( d_holds[hold_amount] )
+
+booking_total = f_transactions[payment_amount] 
+	+ f_transactions[credit_amount] 
+	+ f_transactions[hold_amount]
+

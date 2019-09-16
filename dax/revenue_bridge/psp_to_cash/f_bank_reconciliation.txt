@@ -1,0 +1,13 @@
+// Core Measures
+Total Bank Amount:=SUM( f_bank_reconciliation[amount] )
+Total Bank Charges:=-SUM( f_bank_reconciliation[bank_charge] )
+Total Bank Receipts:=calculate( [Total Bank Amount], filter(dStatuses, dStatuses[status] = "BANK_RECEIPT") )
+Total Bank Payments:=calculate( [Total Bank Amount], filter(dStatuses, dStatuses[status] = "BANK_PAYMENT") )
+Total Bank Statement:=calculate( [Total Bank Amount] + [Total Bank Charges] )
+
+// Local Currency Measures
+Total Bank Amount (LCY):=SUM( f_bank_reconciliation[amount_lcy] )
+Total Bank Charges (LCY):=SUM( f_bank_reconciliation[bank_charge_lcy] )
+Total Bank Receipts (LCY):=calculate( [Total Bank Amount (LCY)], filter(dStatuses, dStatuses[status] = "BANK_RECEIPT") )
+Total Bank Payments (LCY):=calculate( [Total Bank Amount (LCY)], filter(dStatuses, dStatuses[status] = "BANK_PAYMENT") )
+Total Bank Statement (LCY):=calculate( [Total Bank Amount (LCY)] + [Total Bank Charges (LCY)] )

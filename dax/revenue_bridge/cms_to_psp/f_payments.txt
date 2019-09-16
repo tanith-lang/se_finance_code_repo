@@ -1,0 +1,9 @@
+TOTAL F_PYMNTS [amount]:=SUM( f_payments[amount] )
+
+TOTAL_F_BKNG[Duplicate_Auths]:=CALCULATE( SUM(f_payments[amount]), f_payments[status] = "DUPLICATE_AUTH" )
+TOTAL_PAYMENTS:=CALCULATE( [TOTAL F_PYMNTS [amount]]] - [TOTAL_F_BKNG[Abandoned_Auths]]] - [TOTAL_F_BKNG[Adjusted_Auth]]] - [TOTAL_F_BKNG[Duplicate_Auths]]])
+TOTAL_BKNG_PAYMENTS:=CALCULATE( [TOTAL F_PYMNTS [amount]]], f_payments[moto_check] = FALSE )
+TOTAL_MOTO_PAYMENTS:=CALCULATE( [TOTAL F_PYMNTS [amount]]], f_payments[moto_check] = TRUE )
+TOTAL_F_BKNG[Adjusted_Auth]:=CALCULATE( SUM(f_payments[amount]), f_payments[status] = "ADJUSTED_AUTH" )
+TOTAL_F_BKNG[Abandoned_Auths]:=CALCULATE( SUM(f_payments[amount]), f_payments[status] = "ABND_AUTH" )
+

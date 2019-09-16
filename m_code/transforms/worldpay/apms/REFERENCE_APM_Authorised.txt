@@ -1,0 +1,8 @@
+let
+    Source = #"APM Authorised (Table)",
+    #"Filter [Status]" = Table.SelectRows(Source, each ([Status] = "AUTHORISED")),
+    #"Rename [Date]" = Table.RenameColumns(#"Filter [Status]",{{"Date", "Authorised Date"}}),
+    #"Removed Duplicates" = Table.Distinct(#"Rename [Date]", {"Merchant Code", "OrderCode"}),
+    #"Removed Columns" = Table.RemoveColumns(#"Removed Duplicates",{"CurrencyCode", "Amount", "Commission", "Batch ID", "Refusal Reason"})
+in
+    #"Removed Columns"

@@ -1,0 +1,18 @@
+let
+    folder_path = Excel.CurrentWorkbook(){[Name="folder_path"]}[Content]{0}[Column1],
+    import_currency = Excel.CurrentWorkbook(){[Name="import_currency"]}[Content]{0}[Column1],
+    import_month = Excel.CurrentWorkbook(){[Name="import_month"]}[Content]{0}[Column1],
+
+    Source = Folder.Files(folder_path),
+    #"Filter [Folder Path]" = Table.SelectRows(Source, each Text.Contains([Folder Path], "WORLDPAY") and Text.Contains([Folder Path], "INTRCHNG") and Text.Contains([Folder Path], "OTLT_LVL_INVCS")),
+    #"Filter [Extension]" = Table.SelectRows(#"Filter [Folder Path]", each [Extension] = ".csv"),
+    #"Filter [Name]" = Table.SelectRows(#"Filter [Extension]", each Text.Contains([Name], "Outlet-Level-Invoice-Report") and Text.Contains([Name], "2018")),
+    #"Add [Import Month]" = Table.AddColumn(#"Filter [Name]", "Import Month", each Text.BetweenDelimiters([Name], "-", "_", 0, 0), type text),
+    #"Filter [Import Month]" = Table.SelectRows(#"Add [Import Month]", each [Import Month] = import_month),
+    #"Invoked Custom Function" = Table.AddColumn(#"Filter [Import Month]", "getInterchange", each getInterchange([Folder Path], [Name])),
+    #"Removed Other Columns" = Table.SelectColumns(#"Invoked Custom Function",{"getInterchange"}),
+    #"Expanded getInterchange" = Table.ExpandTableColumn(#"Removed Other Columns", "getInterchange", {"InvoiceSummary Id", "Invoice Company Name", "Invoice Period Year", "Invoice Period Name", "Invoice Period Start Date", "Invoice Period End Date", "Invoice BVUK Flag", "Outlet Id", "Store Code", "Billing Currency", "Billing CardName Summary", "Billing CardName Detail", "Sale Type", "Product Type", "Invoice Total to Bill", "Transaction Count", "Turnover", "IC Total Amount", "SF Total Amount", "Acq Total Amount", "Custom Total Amount", "Refund Fee Total Amount", "OCT Fee Total Amount", "Other Charge Total Amount", "Total Amount"}, {"InvoiceSummary Id", "Invoice Company Name", "Invoice Period Year", "Invoice Period Name", "Invoice Period Start Date", "Invoice Period End Date", "Invoice BVUK Flag", "Outlet Id", "Store Code", "Billing Currency", "Billing CardName Summary", "Billing CardName Detail", "Sale Type", "Product Type", "Invoice Total to Bill", "Transaction Count", "Turnover", "IC Total Amount", "SF Total Amount", "Acq Total Amount", "Custom Total Amount", "Refund Fee Total Amount", "OCT Fee Total Amount", "Other Charge Total Amount", "Total Amount"}),
+    #"Filter [Billing Currency]" = Table.SelectRows(#"Expanded getInterchange", each [Billing Currency] = import_currency),
+    #"< Set Data Types >" = Table.TransformColumnTypes(#"Filter [Billing Currency]",{{"InvoiceSummary Id", type text}, {"Invoice Company Name", type text}, {"Invoice Period Year", Int64.Type}, {"Invoice Period Name", Int64.Type}, {"Invoice Period Start Date", type date}, {"Invoice Period End Date", type date}, {"Invoice BVUK Flag", type text}, {"Outlet Id", type text}, {"Store Code", type text}, {"Billing Currency", type text}, {"Billing CardName Summary", type text}, {"Billing CardName Detail", type text}, {"Sale Type", type text}, {"Product Type", type text}, {"Invoice Total to Bill", type number}, {"Transaction Count", Int64.Type}, {"Turnover", type number}, {"IC Total Amount", type number}, {"SF Total Amount", type number}, {"Acq Total Amount", type number}, {"Custom Total Amount", type number}, {"Refund Fee Total Amount", type number}, {"OCT Fee Total Amount", type number}, {"Other Charge Total Amount", type number}, {"Total Amount", type number}})
+in
+    #"< Set Data Types >"

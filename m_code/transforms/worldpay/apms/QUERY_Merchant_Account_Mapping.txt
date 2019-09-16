@@ -1,0 +1,10 @@
+// APM Merchant Account Mapping
+
+let
+    prmFolderPath = Excel.CurrentWorkbook(){[Name="prmFolderPath"]}[Content]{0}[Column1] & "Mapping Tables\Mapping - Merchant Accounts.xlsx",
+
+    Source = Excel.Workbook(File.Contents("C:\Users\saur.dash\Dropbox (Secret Escapes)\Revenue Bridge\Revenue Bridge 2017\Raw Data\Mapping Tables\Mapping - Merchant Accounts.xlsx"), null, true),
+    #"Extract [tblMerchants]" = Source{[Item="tblMerchants",Kind="Table"]}[Data],
+    #"Set Column Data Types" = Table.TransformColumnTypes(#"Extract [tblMerchants]",{{"grp_id", type text}, {"grp_name", type text}, {"com_id", type text}, {"com_name", type text}, {"out_id", type text}, {"out_name", type text}, {"merchant", type text}, {"MCC", type text}, {"admin_code", type text}, {"out_country", type text}, {"out_currency", type text}})
+in
+    #"Set Column Data Types"

@@ -1,0 +1,14 @@
+// Transfers by Period (Import)
+
+let
+    Source = Folder.Files("C:\Users\saur.dash\Dropbox (Secret Escapes)\Revenue Bridge\Revenue Bridge 2017\Raw Data"),
+    #"Filter [Folder Path]" = Table.SelectRows(Source, each Text.Contains([Folder Path], "Transfers by Period")),
+    #"Filter [Extension]" = Table.SelectRows(#"Filter [Folder Path]", each [Extension] = ".csv"),
+    #"Filter [Name]" = Table.SelectRows(#"Filter [Extension]", each Text.Contains([Name], "Transfers-by-Period")),
+    #"<SELECT REPORT MONTH>" = Table.SelectRows(#"Filter [Name]", each ([Name] = "12_Transfers-by-Period.csv")),
+    #"Invoke <fnGetTransfersByPeriod>" = Table.AddColumn(#"<SELECT REPORT MONTH>", "fnGetTransfersByPeriod", each fnGetTransfersByPeriod([Folder Path], [Name])),
+    #"Expand <fnGetTransfersByPeriod>" = Table.ExpandTableColumn(#"Invoke <fnGetTransfersByPeriod>", "fnGetTransfersByPeriod", {"Merchant Code", "Merchant ID", "Batch ID", "Service Level", "Event Type", "Authorised Date", "Trading Date", "Order Code", "Reference", "Payment Method", "Payment Currency", "Payment Amount", "Settlement Currency", "Commission Amount", "Guarantee Amount", "Net Amount", "Journal Description", "Transfer Date"}, {"Merchant Code", "Merchant ID", "Batch ID", "Service Level", "Event Type", "Authorised Date", "Trading Date", "Order Code", "Reference", "Payment Method", "Payment Currency", "Payment Amount", "Settlement Currency", "Commission Amount", "Guarantee Amount", "Net Amount", "Journal Description", "Transfer Date"}),
+    #"Remove Source Columns" = Table.RemoveColumns(#"Expand <fnGetTransfersByPeriod>",{"Content", "Name", "Extension", "Date accessed", "Date modified", "Date created", "Attributes", "Folder Path"}),
+    #"Set Column Data Types" = Table.TransformColumnTypes(#"Remove Source Columns",{{"Merchant Code", type text}, {"Merchant ID", type text}, {"Batch ID", type text}, {"Service Level", type text}, {"Event Type", type text}, {"Authorised Date", type datetime}, {"Trading Date", type date}, {"Order Code", type text}, {"Reference", type text}, {"Payment Method", type text}, {"Payment Currency", type text}, {"Payment Amount", Currency.Type}, {"Settlement Currency", type text}, {"Commission Amount", Currency.Type}, {"Guarantee Amount", Currency.Type}, {"Net Amount", Currency.Type}, {"Transfer Date", type date}, {"Journal Description", type text}})
+in
+    #"Set Column Data Types"

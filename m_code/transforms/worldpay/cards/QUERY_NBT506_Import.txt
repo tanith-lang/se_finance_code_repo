@@ -1,0 +1,25 @@
+// Import - NBT506 Report
+
+let
+    prmFolderPath = Excel.CurrentWorkbook(){[Name="prmFolderPath"]}[Content]{0}[Column1],
+    prmCurrency = Excel.CurrentWorkbook(){[Name="prmCurrency"]}[Content]{0}[Column1],
+
+    Source = Folder.Files(prmFolderPath),
+    #"Filter [Folder Path]" = Table.SelectRows(Source, each Text.Contains([Folder Path], prmCurrency)),
+    #"Filter [Extension]" = Table.SelectRows(#"Filter [Folder Path]", each ([Extension] = ".csv")),
+    #"Filter [Name]" = Table.SelectRows(#"Filter [Extension]", each Text.Contains([Name], "NBT506")),
+    #"Duplicate [Name]" = Table.DuplicateColumn(#"Filter [Name]", "Name", "Name - Copy"),
+    #"Duplicate [Folder Path]" = Table.DuplicateColumn(#"Duplicate [Name]", "Folder Path", "Folder Path - Copy"),
+    #"Split Column by Delimiter" = Table.SplitColumn(#"Duplicate [Folder Path]", "Name - Copy", Splitter.SplitTextByEachDelimiter({"_"}, QuoteStyle.Csv, true), {"Name - Copy.1", "Name - Copy.2"}),
+    #"Replaced Value" = Table.ReplaceValue(#"Split Column by Delimiter",".csv","",Replacer.ReplaceText,{"Name - Copy.2"}),
+    #"Rename [Name]" = Table.RenameColumns(#"Replaced Value",{{"Name - Copy.2", "Merchant ID"}}),
+    #"Split Column by Position" = Table.SplitColumn(#"Rename [Name]", "Folder Path - Copy", Splitter.SplitTextByPositions({0, 4}, true), {"Folder Path - Copy.1", "Folder Path - Copy.2"}),
+    #"Replaced Value1" = Table.ReplaceValue(#"Split Column by Position","\","",Replacer.ReplaceText,{"Folder Path - Copy.2"}),
+    #"Rename [Folder Path - Copy]" = Table.RenameColumns(#"Replaced Value1",{{"Folder Path - Copy.2", "Currency Code"}}),
+    #"Invoke <fnGetNBT506>" = Table.AddColumn(#"Rename [Folder Path - Copy]", "fnGetNBT506", each fnGetNBT506([Folder Path], [Name])),
+    #"Expand <fnGetNBT506>" = Table.ExpandTableColumn(#"Invoke <fnGetNBT506>", "fnGetNBT506", {"Processing Date", "No. of Transactions", "Gross Value of Transactions", "No. of Chargebacks", "Value of Chargebacks", "MSC Value", "Sundry Items", "Final Settlement Value"}, {"Processing Date", "No. of Transactions", "Gross Value of Transactions", "No. of Chargebacks", "Value of Chargebacks", "MSC Value", "Sundry Items", "Final Settlement Value"}),
+    #"Removed Columns" = Table.RemoveColumns(#"Expand <fnGetNBT506>",{"Content", "Name", "Extension", "Date accessed", "Date modified", "Date created", "Attributes", "Folder Path", "Name - Copy.1", "Folder Path - Copy.1"}),
+    #"Set Column Data Types" = Table.TransformColumnTypes(#"Removed Columns",{{"Processing Date", type date}, {"No. of Transactions", Int64.Type}, {"Gross Value of Transactions", Currency.Type}, {"No. of Chargebacks", Int64.Type}, {"Value of Chargebacks", Currency.Type}, {"MSC Value", Currency.Type}, {"Sundry Items", Currency.Type}, {"Final Settlement Value", Currency.Type}})
+in
+    #"Set Column Data Types"
+

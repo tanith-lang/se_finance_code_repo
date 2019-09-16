@@ -1,0 +1,7 @@
+(filePath, fileName) =>
+
+let
+    Source = Csv.Document(File.Contents(filePath&fileName),[Delimiter=",", Columns=5, Encoding=1252, QuoteStyle=QuoteStyle.None]),
+    #"Promoted Headers" = Table.PromoteHeaders(Source, [PromoteAllScalars=true])
+in
+    #"Promoted Headers"

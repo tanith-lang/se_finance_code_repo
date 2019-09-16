@@ -1,0 +1,9 @@
+(filePath, fileName) =>
+
+let
+    Source = Csv.Document(File.Contents(filePath&fileName),[Delimiter=",", Columns=11, Encoding=1252, QuoteStyle=QuoteStyle.None]),
+    #"Promoted Headers" = Table.PromoteHeaders(Source, [PromoteAllScalars=true]),
+    #"Remove [Administration Code]" = Table.RemoveColumns(#"Promoted Headers",{"Administration Code"}),
+    #"Removed Blank Rows" = Table.SelectRows(#"Remove [Administration Code]", each not List.IsEmpty(List.RemoveMatchingItems(Record.FieldValues(_), {"", null})))
+in
+    #"Removed Blank Rows"

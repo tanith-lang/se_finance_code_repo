@@ -1,0 +1,22 @@
+let
+    Source = Folder.Files("C:\Users\financetemp\Dropbox\Revenue bridge\Revenue Bridge 2017\Raw Data\Transaction Summary"),
+    #"Filter [Name]" = Table.SelectRows(Source, each Text.Contains([Name], "Transaction Summary")),
+    #"Filter [Extension]" = Table.SelectRows(#"Filter [Name]", each [Extension] = ".csv"),
+    #"Removed Other Columns" = Table.SelectColumns(#"Filter [Extension]",{"Name", "Folder Path"}),
+    #"Add <fnGetTransactionSummary>" = Table.AddColumn(#"Removed Other Columns", "fnGetTransactionSummary", each fnGetTransactionSummary([Folder Path], [Name])),
+    #"Invoke <fnGetTransactionSummary>" = Table.ExpandTableColumn(#"Add <fnGetTransactionSummary>", "fnGetTransactionSummary", {"Merchant Code", "OrderCode", "Date", "PaymentMethod", "Status", "CurrencyCode", "Amount", "Commission", "Batch ID", "Refusal Reason"}, {"Merchant Code", "OrderCode", "Date", "PaymentMethod", "Status", "CurrencyCode", "Amount", "Commission", "Batch ID", "Refusal Reason"}),
+    #"Remove Source Columns" = Table.RemoveColumns(#"Invoke <fnGetTransactionSummary>",{"Name", "Folder Path"}),
+    #"Set Column Data Types" = Table.TransformColumnTypes(#"Remove Source Columns",{{"Merchant Code", type text}, {"OrderCode", type text}, {"PaymentMethod", type text}, {"Status", type text}, {"CurrencyCode", type text}, {"Refusal Reason", type text}, {"Amount", Currency.Type}, {"Commission", Currency.Type}, {"Batch ID", Int64.Type}, {"Date", type datetime}}),
+    #"Filter [CurrencyCode]" = Table.SelectRows(#"Set Column Data Types", each ([CurrencyCode] = "CHF")),
+    #"Filter [PaymentMethod]" = Table.SelectRows(#"Filter [CurrencyCode]",
+        each [PaymentMethod] = "AMEX-SSL"
+        or [PaymentMethod] = "CARTEBLEUE-SSL"
+        or [PaymentMethod] = "CB-SSL"
+        or [PaymentMethod] = "DINERS-SSL"
+        or [PaymentMethod] = "IDEAL-SSL"
+        or [PaymentMethod] = "PAYPAL-EXPRESS"
+        or [PaymentMethod] = "PAYU-SSL"
+        or [PaymentMethod] = "SOFORT-SSL"),
+    #"Sorted Rows" = Table.Sort(#"Filter [PaymentMethod]",{{"Merchant Code", Order.Ascending}, {"OrderCode", Order.Ascending}, {"Date", Order.Ascending}})
+in
+    #"Sorted Rows"

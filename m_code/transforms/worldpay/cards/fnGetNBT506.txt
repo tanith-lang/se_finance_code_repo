@@ -1,0 +1,13 @@
+// NBT506 Cleaning Function
+let
+    Source = (filePath, fileName) =>
+
+let
+    Source = Csv.Document(File.Contents(filePath&fileName),[Delimiter=",", Columns=8, Encoding=1252, QuoteStyle=QuoteStyle.None]),
+    #"Promoted Headers" = Table.PromoteHeaders(Source, [PromoteAllScalars=true]),
+    #"Filter [Processing Date]" = Table.SelectRows(#"Promoted Headers", each ([Processing Date] <> "Subtotals")),
+    #"Set Column Data Types" = Table.TransformColumnTypes(#"Filter [Processing Date]",{{"Processing Date", type date}, {"No. of Transactions", Int64.Type}, {"Gross Value of Transactions", Currency.Type}, {"No. of Chargebacks", Int64.Type}, {"Value of Chargebacks", Currency.Type}, {"MSC Value", Currency.Type}, {"Sundry Items", Currency.Type}, {"Final Settlement Value", Currency.Type}})
+in
+    #"Set Column Data Types"
+in
+    Source

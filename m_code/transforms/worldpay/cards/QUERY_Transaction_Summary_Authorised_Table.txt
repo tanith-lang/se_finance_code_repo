@@ -1,0 +1,19 @@
+let
+    Source = Excel.CurrentWorkbook(){[Name="tblTransSummary"]}[Content],
+    #"Set Column Data Types" = Table.TransformColumnTypes(Source,{{"Merchant Code", type text}, {"OrderCode", type text}, {"Date", type datetime}, {"PaymentMethod", type text}, {"Status", type text}, {"CurrencyCode", type text}, {"Amount", type number}, {"Commission", type number}, {"Batch ID", Int64.Type}, {"Refusal Reason", type text}}),
+    #"Filter [Status]" = Table.SelectRows(#"Set Column Data Types", each ([Status] = "SENT_FOR_AUTHORISATION" or [Status] = "AUTHORISED" or [Status] = "REFUSED" or [Status] = "ERROR" or [Status] = "CANCELLED")),
+    #"Add Custom [Amount]" = Table.AddColumn(#"Filter [Status]", "Custom",
+        each if [Status] = "SENT_FOR_AUTHORISATION" then 0
+        else if [Status] = "AUTHORISED" then [Amount]
+        else if [Status] = "REFUSED" then 0
+        else if [Status] = "ERROR" then 0
+	else if [Status] = "SHOPPER_REDIRECTED" then 0
+        else if [Status] = "CANCELLED" then [Amount]
+        else null),
+    #"Reordered Columns" = Table.ReorderColumns(#"Add Custom [Amount]",{"Merchant Code", "OrderCode", "Date", "PaymentMethod", "Status", "CurrencyCode", "Amount", "Custom", "Commission", "Batch ID", "Refusal Reason"}),
+    #"Remove Original [Amount]" = Table.RemoveColumns(#"Reordered Columns",{"Amount"}),
+    #"Rename Custom [Amount]" = Table.RenameColumns(#"Remove Original [Amount]",{{"Custom", "Amount"}}),
+    #"Set [Amount] Data Type" = Table.TransformColumnTypes(#"Rename Custom [Amount]",{{"Amount", type number}}),
+    #"Sorted Rows" = Table.Sort(#"Set [Amount] Data Type",{{"Merchant Code", Order.Ascending}, {"OrderCode", Order.Ascending}, {"Date", Order.Ascending}})
+in
+    #"Sorted Rows"
