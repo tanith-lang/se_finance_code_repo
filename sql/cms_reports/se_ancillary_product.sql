@@ -1,4 +1,4 @@
--- SE CMS Ancillary Product Sales V1
+-- SE CMS Ancillary Product Sales --
 SELECT
        ap.id                      AS ancillary_id,
        ap.version                 AS version,
@@ -25,6 +25,6 @@ FROM   secretescapes.ancillary_product ap
               ON b.id = ap.booking_id
        -- Report filters --
 WHERE  b.status != 'ABANDONED'
-       AND Month(b.date_created) = 7
+       AND Month(b.date_created) = 8
        AND Year(b.date_created) = 2019
 ORDER  BY ap.booking_id;

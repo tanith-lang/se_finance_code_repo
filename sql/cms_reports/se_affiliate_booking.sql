@@ -1,4 +1,4 @@
--- Affiliate User Bookings
+-- Affiliate User Bookings V1
 SELECT au.id                AS affiliate_user_id,
        Lower(au.email)      AS user_name,
        au.date_created      AS user_join_date,

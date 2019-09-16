@@ -1,4 +1,4 @@
--- SE CMS Voucher Report
+-- SE CMS Voucher Report --
 SELECT
        v.id                           AS voucher_id,
        v.version                      AS version,
@@ -43,6 +43,6 @@ FROM
               ON a.territory_id = t.id
        -- Report filters --
 WHERE  (v.status != 'ABANDONED' AND v.status != 'NEW')
-       AND Year(v.date_created) = 2015
+       AND Year(v.date_created) = 2019
 GROUP  BY voucher_id
 ORDER  BY voucher_id;

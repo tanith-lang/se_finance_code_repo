@@ -40,7 +40,7 @@ FROM   secretescapes.booking b
               ON t.id = a.territory_id
        -- Report filters --
 WHERE  b.status != 'ABANDONED'
-       AND Month(b.date_created) = 7
+       AND Month(b.date_created) = 8
        AND Year(b.date_created) = 2019
 GROUP  BY booking_id
 ORDER  BY booking_id;

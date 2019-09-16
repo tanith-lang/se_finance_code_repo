@@ -1,5 +1,5 @@
--- SE CMS Reservations Report
- SELECT
+-- SE Reservations Report --
+SELECT
        r.id                             AS reservation_id,
        r.unique_transaction_reference   AS order_code,
        r.user_id                        AS user_id,
@@ -37,7 +37,7 @@ FROM   secretescapes.reservation r
               ON t.id = a.territory_id
        -- Report filters --
 WHERE  r.status != 'ABANDONED'
-       AND Month(r.date_created) = 7
+       AND Month(r.date_created) = 8
        AND Year(r.date_created) = 2019
 GROUP  BY reservation_id
 ORDER  BY reservation_id;

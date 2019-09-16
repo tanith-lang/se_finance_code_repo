@@ -1,4 +1,4 @@
--- SE CMS Abandoned Booking Report
+-- SE CMS Abandoned Booking Report --
 SELECT
        b.id                               AS booking_id,
        b.unique_transaction_reference     AS order_code,
@@ -43,6 +43,7 @@ FROM   secretescapes.booking b
 WHERE  b.status = 'ABANDONED'
        AND (p.type IS NOT NULL
        AND p.type != 'ZERO_DEPOSIT')
-       AND Month(b.date_created) = 7
+       AND Month(b.date_created) = 8
        AND Year(b.date_created) = 2019
-GROUP  BY booking_id;
+GROUP  BY booking_id
+ORDER BY booking_id;

@@ -1,4 +1,4 @@
--- SE CMS User Bookings V1
+-- SE CMS User Booking Report --
 SELECT u.id                AS se_user_id,
        Lower(u.username)   AS user_name,
        u.date_created      AS user_join_date,
