@@ -1,0 +1,8 @@
+= (filePath as text, fileName as text) =>
+
+let
+    Source = Csv.Document(File.Contents(filePath&fileName),[Delimiter=",", Columns=14, Encoding=1252, QuoteStyle=QuoteStyle.None]),
+    #"Promoted Headers" = Table.PromoteHeaders(Source, [PromoteAllScalars=true]),
+    #"< Set Data Types >" = Table.TransformColumnTypes(#"Promoted Headers",{{"Date", type datetime}, {"Amount", Currency.Type}})
+in
+    #"< Set Data Types >"
